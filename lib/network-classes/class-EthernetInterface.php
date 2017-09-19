@@ -133,7 +133,27 @@ class EthernetInterface
                     $newInterface->type = &$this->type;
                     $newInterface->load_sub_from_domxml($unitsNode);
 
-                    $this->subInterfaces[] = $newInterface;
+                    $ip_string_new = "";
+                    foreach( $newInterface->getLayer3IPv4Addresses() as $interface_ip)
+                        $ip_string_new .= $interface_ip;
+
+                    if( isset( $this->subInterfaces[ $newInterface->name ] ) )
+                    {
+                        $ip_string_old = "";
+                        foreach( $this->subInterfaces[ $newInterface->name ]->getLayer3IPv4Addresses() as $interface_ip)
+                        {
+                            $ip_string_old .= $interface_ip;
+                            print "add: ".$interface_ip." to interface ".$newInterface->name."\n";
+                            $existing_subInterface = $this->subInterfaces[ $newInterface->name ];
+
+                        }
+                        mwarning( "duplicated subinterface named '".$newInterface->name."' detected (new: ".$ip_string_new.") (old: ".$ip_string_old.") ,  you should review your XML config file" );
+                    }
+                    #else
+                        $this->subInterfaces[ $newInterface->name ] = $newInterface;
+
+                    #old config
+                    #$this->subInterfaces[] = $newInterface;
 
                 }
             }
