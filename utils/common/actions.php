@@ -48,7 +48,7 @@ class CallContext
         $this->prepareArgumentsForAction($arguments);
 
         if( $nestedQueries === null )
-            $this->nestedQueries = Array();
+            $nestedQueries = Array();
         else
             $this->nestedQueries = &$nestedQueries;
     }
