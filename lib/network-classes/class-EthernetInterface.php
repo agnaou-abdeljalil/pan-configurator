@@ -68,6 +68,19 @@ class EthernetInterface
     {
         $this->xmlroot = $xml;
 
+        $tmp_name = DH::findAttribute('name', $xml);
+        $duplicate_interface = false;
+
+        foreach( $this->owner->getInterfaces() as $tmpinterface1 )
+        {
+            if( $tmpinterface1->name == $tmp_name )
+            {
+                $tmp_ips = $tmpinterface1->getLayer3IPv4Addresses_toString_inline();
+                $duplicate_interface = true;
+            }
+        }
+
+
         $this->name = DH::findAttribute('name', $xml);
         if( $this->name === FALSE )
             derr("address name not found\n");
@@ -112,6 +125,9 @@ class EthernetInterface
                 }
             }
         }
+        if( $duplicate_interface )
+            mwarning( "duplicated interface named '".$tmp_name."' detected (newIP: ".$this->getLayer3IPv4Addresses_toString_inline().") (existingIP: ".$tmp_ips.") ,  you should review your XML config file" );
+
 
         // looking for sub interfaces and stuff like that   :)
         foreach( $this->typeRoot->childNodes as $node )
@@ -133,28 +149,9 @@ class EthernetInterface
                     $newInterface->type = &$this->type;
                     $newInterface->load_sub_from_domxml($unitsNode);
 
-                    $ip_string_new = "";
-                    foreach( $newInterface->getLayer3IPv4Addresses() as $interface_ip)
-                        $ip_string_new .= $interface_ip;
-
                     if( isset( $this->subInterfaces[ $newInterface->name ] ) )
-                    {
-                        $ip_string_old = "";
-                        foreach( $this->subInterfaces[ $newInterface->name ]->getLayer3IPv4Addresses() as $interface_ip)
-                        {
-                            $ip_string_old .= $interface_ip;
-                            print "add: ".$interface_ip." to interface ".$newInterface->name."\n";
-                            $existing_subInterface = $this->subInterfaces[ $newInterface->name ];
-
-                        }
-                        mwarning( "duplicated subinterface named '".$newInterface->name."' detected (new: ".$ip_string_new.") (old: ".$ip_string_old.") ,  you should review your XML config file" );
-                    }
-                    #else
-                        $this->subInterfaces[ $newInterface->name ] = $newInterface;
-
-                    #old config
-                    #$this->subInterfaces[] = $newInterface;
-
+                        mwarning( "duplicated subinterface named '".$newInterface->name."' detected (newIP: ".$newInterface->getLayer3IPv4Addresses_toString_inline().") (existingIP: ".$this->subInterfaces[ $newInterface->name ]->getLayer3IPv4Addresses_toString_inline().") ,  you should review your XML config file" );
+                    $this->subInterfaces[ $newInterface->name ] = $newInterface;
                 }
             }
         }
@@ -257,6 +254,13 @@ class EthernetInterface
             return Array();
 
         return $this->l3ipv4Addresses;
+    }
+
+    public function getLayer3IPv4Addresses_toString_inline()
+    {
+        $arr = $this->getLayer3IPv4Addresses();
+
+        return PH::list_to_string($arr);
     }
 
     public function countSubInterfaces()
