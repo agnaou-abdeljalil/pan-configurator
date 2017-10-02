@@ -191,6 +191,7 @@ class ServiceRuleContainer extends ObjRuleContainer
         //print "started to extract '".$this->toString()."' from xml\n";
         $this->xmlroot = $xml;
         $i=0;
+        $service_set = false;
         foreach( $xml->childNodes as $node )
         {
             if( $node->nodeType != 1 ) continue;
@@ -203,6 +204,7 @@ class ServiceRuleContainer extends ObjRuleContainer
                     mwarning('rule has a bad combination of services', $xml);
 
                 $this->o = Array();
+                $service_set = true;
                 continue;
             }
             else if($lower == 'application-default')
@@ -212,6 +214,7 @@ class ServiceRuleContainer extends ObjRuleContainer
 
                 $this->o = Array();
                 $this->appDef = true;
+                $service_set = true;
                 continue;
             }
 
@@ -224,6 +227,19 @@ class ServiceRuleContainer extends ObjRuleContainer
             $this->o[] = $f;
             $i++;
         }
+
+
+        if( $this->owner->isSecurityRule() )
+        {
+            if( !$service_set  && count( $this->o ) == 0  )
+            {
+                $apps_all = $this->owner->apps->toString_inline();
+                print "|".$apps_all."|";
+                mwarning( "rule has no service configured, but is using app-id", $xml );
+            }
+        }
+
+
     }
 
 
